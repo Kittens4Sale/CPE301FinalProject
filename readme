@@ -1,1 +1,9 @@
-Group members: Megan Kershaw, Matthew Guild, Guilherme Cassiano,
+Group members: Megan Kershaw, Matthew Guild, Guilherme Cassiano, Lucas Adams.
+
+Project Goals: 
+  *Monitor the water levels in a reservoir and print an alert when the water level is too low.
+  *Monitor and display the current air temp and humidity on an LCD screen
+  * Start and stop a motorized fan as needed when the temperature goes out of the specified range.
+  * Allow user to adjust the angle of the vent from the system.
+  * Allow user to enable or disable the system using an on/off button.
+  * Record the date and time when the motor is turned off or on. 
