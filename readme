@@ -7,3 +7,14 @@ Project Goals:
   * Allow user to adjust the angle of the vent from the system.
   * Allow user to enable or disable the system using an on/off button.
   * Record the date and time when the motor is turned off or on. 
+
+
+
+ Summary of group work: 
+As a group we decided to split up the work for this project. Cassiano and I focused more on the 
+software part of it. I coded the beginning of the project and started to set it up. Megan and 
+Lucas focused on the circuit and worked on the hardware aspect of the project. They tested my 
+code and then edited it to make it work in the project and to connect with the other parts of 
+the project. They also coded the angle of the vent, and the code for the motorized fan. Cassiano 
+finished the project code and we both looked over the code as a whole and edited a few things so 
+that the project would compile.
