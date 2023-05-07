@@ -1,8 +1,8 @@
-Group members: Megan Kershaw, Matthew Guild, Guilherme Cassiano, Lucas Adams.
+Group members: Megan Kershaw, Matthew Guild, Guilherme Cassiano, Lucas Adams
 
 Project Goals: 
-  *Monitor the water levels in a reservoir and print an alert when the water level is too low.
-  *Monitor and display the current air temp and humidity on an LCD screen
+  * Monitor the water levels in a reservoir and print an alert when the water level is too low.
+  * Monitor and display the current air temp and humidity on an LCD screen.
   * Start and stop a motorized fan as needed when the temperature goes out of the specified range.
   * Allow user to adjust the angle of the vent from the system.
   * Allow user to enable or disable the system using an on/off button.
@@ -10,10 +10,10 @@ Project Goals:
 
 
 
- Summary of group work: 
-As a group we decided to split up the work for this project. Cassiano and I focused more on the 
-software part of it. I coded the beginning of the project and started to set it up. Megan and 
-Lucas focused on the circuit and worked on the hardware aspect of the project. They tested my 
+Summary of group work: 
+   As a group we decided to split up the work for this project. Cassiano and Matthew focused more on the 
+software part of it. Matthew coded the beginning of the project and started to set it up. Megan and 
+Lucas focused on the circuit and worked on the hardware aspect of the project. We tested Matthew's intial 
 code and then edited it to make it work in the project and to connect with the other parts of 
 the project. They also coded the angle of the vent, and the code for the motorized fan. Cassiano 
 finished the project code and we both looked over the code as a whole and edited a few things so 
