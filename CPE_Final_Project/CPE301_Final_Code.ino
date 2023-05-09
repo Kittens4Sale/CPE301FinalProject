@@ -1,11 +1,13 @@
 // CPE 301: Embedded System Design
 // Authors: Matthew Guild, Guilherme Cassiano, Megan Kershaw and Lucas Adams
-// Date: 5/1/2023
+// Date: 5/4/2023
 // Project: Final Project
 
 #include <Stepper.h>
 #include <LiquidCrystal.h>
 #include <dht11.h>
+#include "Arduino.h"
+#include "uRTCLib.h"
 
 /* initialize the library by associating any needed LCD interface pin
 with the arduino pin number it is connected to*/
@@ -34,6 +36,14 @@ int BlueLED = ;
 #define DHT11PIN 5;
 dht11 DHT11;
 
+//Establish clock variable
+uRTCLib rtc(0x68);
+char daysOfTheWeek[7][12] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
+
+//Set variables for motor
+int enMotor = 17;
+int in1Motor = 15;
+int in2Motor = 16;
 
 void setup() {
   // Initialize LCD pins as output and back light on
@@ -61,15 +71,30 @@ void setup() {
   pinMode(RedLED, OUTPUT);
   pinMode(GreenLED, OUTPUT);
   pinMode(BlueLED, OUTPUT);
+
+  // Set all the motor control pins to outputs
+  pinMode(enMotor, OUTPUT);
+  pinMode(in1Motor, OUTPUT);
+  pinMode(in2Motor, OUTPUT);
+  //Turn off motor - Initial state
+  digitalWrite (in1Motor, LOW);
+  digitalWrite (in2Motor, LOW);
   
   // Initialize serial communication
   Serial.begin(9600);
+
+  //Set date and time for clock
+  URTCLIB_WIRE.begin();
+  rtc.set(0, 10, 1, 5, 4, 5,23)
 }
 
 void loop() {
   int onOffValue = 0;
   int onOffLastValue = 0;
   int chk = DHT11.read(DHT11PIN);
+
+  // Refresh Clock
+  rtc.refresh();  
 
   // Vent movement using buttons
   buttonState1 = digitalRead(button1);
@@ -104,7 +129,9 @@ void loop() {
       digitalWrite (RedLED, HIGH);
       digitalWrite (GreenLED, LOW);
       digitalWrite (BlueLED, LOW);
-                                            //Add code to set motor to off
+       // Turn off motor
+      digitalWrite(in1Motor, LOW);
+      digitalWrite(in2Motor,LOW); 
                                             //Add code to move to idle if button pressed         
     } else {
       if () {                      //Insert boolean expression for if tempature is GREATER than a certain number
@@ -116,7 +143,10 @@ void loop() {
         digitalWrite (RedLED, LOW);
         digitalWrite (GreenLED, HIGH);
         digitalWrite (BlueLED, LOW);
-                                            //Add code to set motor to on
+        // Run Motor at fastest speed
+        analogWrite (enMotor, 255);
+        digitalWrite(in1Motor, LOW);
+        digitalWrite(in2Motor,HIGH);
                                             //     
       } else {
         // System in idle
@@ -127,12 +157,14 @@ void loop() {
         digitalWrite (RedLED, LOW);
         digitalWrite (GreenLED, LOW);
         digitalWrite (BlueLED, HIGH);
+        // Turn off motor
+        digitalWrite(in1Motor, LOW);
+        digitalWrite(in2Motor,LOW);
       }
     }
     onOffLastValue = onOffValue;
   } else {
     // System Disabled
-                                            //Add code to set motor to off
     lcd.setCursor (0, 0);
     lcd.print ("Disabled")
     // Turn on yellow LED
@@ -140,6 +172,9 @@ void loop() {
     digitalWrite (RedLED, LOW);
     digitalWrite (GreenLED, LOW);
     digitalWrite (BlueLED, LOW);
+    // Turn off motor
+    digitalWrite(in1Motor, LOW);
+    digitalWrite(in2Motor,LOW);
     // Print state and time to serial monitor
     Serial.print ("DISABLED");
     Serial.print ();                        //Insert code to display time to serial monitor
