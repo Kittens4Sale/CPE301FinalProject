@@ -11,10 +11,16 @@ Project Goals:
 
 
 Summary of group work: 
-   As a group we decided to split up the work for this project. Cassiano and Matthew focused more on the 
-software part of it. Matthew coded the beginning of the project and started to set it up. Megan and 
-Lucas focused on the circuit and worked on the hardware aspect of the project. We tested Matthew's intial 
-code and then edited it to make it work in the project and to connect with the other parts of 
-the project. They also coded the angle of the vent, and the code for the motorized fan. Cassiano 
-finished the project code and we both looked over the code as a whole and edited a few things so 
-that the project would compile.
+   As a group we decided to split up the work for this project. Cassiano and Matthew focused more
+   on the software part of it, while Megan and Lucas focused on the physical part. Matthew coded 
+   the beginning of the project and started to set it up. Megan and Lucas tested the code with 
+   the circuit and edited the errors and re-did a lot of the code so that the circuit could work. 
+   From the set up we were able to display the air temp and temp on the LCD, start and stop the
+   fan, and adjust the angle of the vent. The biggest issues we had after the set up and getting 
+   those parts to work was the on/off button, and the water level. Cassiano and Matthew went to 
+   Bashira for help. We also found how to set it up with Arduino library functions and compared 
+   that to the lab 9 code so that we could figure out how to take out the library functions and 
+   still have it print. We showed this to Bashira and then also asked for advice for how to do 
+   the on/off button. We then all got back together and finished the water level and the on off 
+   button. Lucas then did the diagram of the circuit and Cassiano, Matthew and Megan worked on 
+   the code a little bit more and completed the video. 
