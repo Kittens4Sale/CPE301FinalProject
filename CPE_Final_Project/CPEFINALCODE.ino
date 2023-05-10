@@ -18,15 +18,13 @@ LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 const int stepsPerRevolution = 2038;
 int stepValue = 0;
 Stepper myStepper = Stepper(stepsPerRevolution, 8, 9, 10, 11);
-
-
 const int button1 = 2;   //Stepper motor rotate
 int buttonState1 = 0;
 const int button2 = 3;   //Stepper motor rotate the other way
 int buttonState2 = 0;
 const int onOffButton = 4;  //Enable and disable swamp cooler
 int onOffButtonState = 0; 
-const int resetButton = 1;  //Reset button to set to idle
+const int resetButton = 6;  //Reset button to set to idle
 int resetButtonState = 0;
 
 //Four LEDs variable declaration
@@ -36,7 +34,7 @@ int GreenLED = 46;
 int BlueLED = 40;
 
 //Humidity and temperature monitor variable declaration
-#define DHT11PIN 5
+#define DHT11PIN 7
 dht11 DHT11;
 
 //Establish clock variable
@@ -67,8 +65,8 @@ volatile unsigned char* my_ADCSRB = (unsigned char*) 0x7B;
 volatile unsigned char* my_ADCSRA = (unsigned char*) 0x7A;
 // Value for storing water level
 volatile unsigned int* my_ADC_DATA = (unsigned int*) 0x78;
-int stateNum = 0;
-
+int stateNum;
+int onOffValue = 1;
 void setup() {
   // Initialize LCD pins as output and back light on
   pinMode(23,OUTPUT);
@@ -119,18 +117,13 @@ void setup() {
 
   //Set date and time for clock
   URTCLIB_WIRE.begin();
-  rtc.set(0, 10, 1, 5, 4, 5,23);
+  rtc.set(0, 24, 6, 3, 9, 5,23);
+  stateNum = 0;
 }
 
 void loop() {
-  int onOffValue = 0;
-  int onOffLastValue = 0;
   int chk = DHT11.read(DHT11PIN);
-
-  
-
-  onOffButtonState = digitalRead(onOffButton);  
-  
+  Serial.print('\n');
   // Refresh Clock
   rtc.refresh();  
 
@@ -138,25 +131,29 @@ void loop() {
   buttonState1 = digitalRead(button1);
   buttonState2 = digitalRead(button2); 
   onOffButtonState = digitalRead(onOffButton);   
+  resetButtonState = digitalRead(resetButton);
   int stepValue = 0;
   myStepper.setSpeed(5);
   if (buttonState1 == HIGH){
     stepValue = 200;
-    Serial.print("a");            //display change in vent in serial monitor //placeholder
   } else if (buttonState2 == HIGH){
     stepValue = -200;
-    Serial.print("a");            //display change in vent in serial monitor //placeholder
-  } else {
-    stepValue = 0;
+  } else{
+        stepValue = 0;
   }
   myStepper.step(stepValue);
-  
+  if(resetButtonState == HIGH){
+    stateNum = 2;
+    displayTime(stateNum);
+    stateAction(stateNum);
+    delay(5000);
+  }
   // if on off button pressed, add to value variable
   if (onOffButtonState == HIGH){
     onOffValue = onOffValue + 1;
   }
   // if on off button pressed, change state between disbaled and enabled
-  if (onOffValue != onOffLastValue){
+if (onOffValue % 2 == 0){
 
     // Humidity and temp reading and displaying
     int temp = humTempMonitor();
@@ -169,56 +166,66 @@ void loop() {
     if (adc_reading <= 159) {                  //Insert boolean expression for if water level is LESS than a certain number
       // System in error
       stateNum = 3;
+      displayTime(stateNum);
                                             //Add code to move to idle if button pressed         
     } else {
-      if (temp > 40) {                      //Insert boolean expression for if tempature is GREATER than a certain number //placeholder number
+      if (temp > 0) {                      //Insert boolean expression for if tempature is GREATER than a certain number //placeholder number
         // System Running
-        stateNum = 1;    
+        stateNum = 1;  
+        displayTime(stateNum);
+
       } else {
         // System in idle
         stateNum = 2;
+        displayTime(stateNum);
       }
     }
   } else {
     // System Disabled
     stateNum = 0;
+    displayTime(stateNum);
   }
   stateAction(stateNum);
+  delay(1000);
 }
 
 // Function for deciding which state the cooler is in and doing the actions for that stage
 void stateAction(int stateNum) {
   if (stateNum == 1) {             //Running
     // Display "Running" on LCD
+    lcd.clear();
     lcd.setCursor (0, 0);
-    lcd.print ("Running");
     // Turn on green LED
-    digitalWrite (YellowLED, LOW);
-    digitalWrite (RedLED, LOW);
-    digitalWrite (GreenLED, HIGH);
-    digitalWrite (BlueLED, LOW);
-    // Run Motor at fastest speed
-    analogWrite (enMotor, 255);
-    digitalWrite(in1Motor, LOW);
-    digitalWrite(in2Motor,HIGH);
-    
-  } else if (stateNum == 2) {      //Idle
-    // Display "Idle" in LCD
-    lcd.setCursor (0, 0);        
-    lcd.print ("Idle");
-    // Turn on blue LED
     digitalWrite (YellowLED, LOW);
     digitalWrite (RedLED, LOW);
     digitalWrite (GreenLED, LOW);
     digitalWrite (BlueLED, HIGH);
+    // Run Motor at fastest speed
+    analogWrite (enMotor, 255);
+    digitalWrite(in1Motor, LOW);
+    digitalWrite(in2Motor,HIGH);
+    displayTemp();
+    
+  } else if (stateNum == 2) {      //Idle
+    // Display "Idle" in LCD
+    lcd.clear();
+    lcd.setCursor (0, 0);        
+    // Turn on blue LED
+    digitalWrite (YellowLED, LOW);
+    digitalWrite (RedLED, LOW);
+    digitalWrite (GreenLED, HIGH);
+    digitalWrite (BlueLED, LOW);
     // Turn off motor
     digitalWrite(in1Motor, LOW);
     digitalWrite(in2Motor,LOW);
-    
+    displayTemp();
   } else if (stateNum == 3) {      //Error
     // Display "Error" on LCD
+    lcd.clear();
     lcd.setCursor (0, 0);
-    lcd.print ("ERROR");
+    lcd.print ("Water level is");
+    lcd.setCursor (0, 1);
+    lcd.print ("too low");
     // Turn on red LED
     digitalWrite (YellowLED, LOW);
     digitalWrite (RedLED, HIGH);
@@ -229,9 +236,9 @@ void stateAction(int stateNum) {
     digitalWrite(in2Motor,LOW); 
 
                                             //Add code to move to idle if button pressed
-
   } else {                         //Disabled
     //Display "Disabled" on LCD
+    lcd.clear();
     lcd.setCursor (0, 0);
     lcd.print ("Disabled");
     // Turn on yellow LED
@@ -243,8 +250,6 @@ void stateAction(int stateNum) {
     digitalWrite(in1Motor, LOW);
     digitalWrite(in2Motor,LOW);
     // Print state and time to serial monitor
-    Serial.print ("DISABLED");
-    Serial.print ("aa");                        //Insert code to display time to serial monitor //placeholder
   }
 }
 
@@ -253,14 +258,6 @@ int humTempMonitor()
  {
   int chk = DHT11.read(DHT11PIN);
   int temp = DHT11.temperature;
-  
-  lcd.setCursor(0, 1);  
-  lcd.print((float)DHT11.humidity, 2);
-  lcd.print("%");
-  lcd.setCursor(5, 1);
-  lcd.print((float)DHT11.temperature, 2);
-  lcd.print("C"); 
-
   return temp;
 }
 
@@ -364,4 +361,53 @@ void U0putchar(unsigned char U0pdata)
 {
   while((*myUCSR0A & TBE)==0);
   *myUDR0 = U0pdata;
+}
+void displayTime(int mode){
+    rtc.refresh();
+
+  switch(mode){
+    case 0:
+      Serial.print("Mode changed to Disabled at time: ");
+      break;
+    case 1:
+      Serial.print("Mode changed to Running at time: ");
+      break;
+    case 2:
+      Serial.print("Mode changed to Idle at time: ");
+      break;
+    case 3:
+      Serial.print("Mode changed to Error at time: ");
+      break;
+  }
+  Serial.print(rtc.year());
+  Serial.print('/');
+  Serial.print(rtc.month());
+  Serial.print('/');
+  Serial.print(rtc.day());
+
+  Serial.print(" (");
+  Serial.print(daysOfTheWeek[rtc.dayOfWeek()-1]);
+   Serial.print(") ");
+
+  Serial.print(rtc.hour());
+  Serial.print(':');
+  Serial.print(rtc.minute());
+  Serial.print(':');
+  Serial.println(rtc.second());
+  
+  delay(1000);
+}
+void displayTemp()
+{
+  int chk = DHT11.read(DHT11PIN);
+  lcd.setCursor(0,0); 
+  lcd.print("Temp: ");
+  lcd.print(DHT11.temperature);
+  lcd.print((char)223);
+  lcd.print("C");
+  lcd.setCursor(0,1);
+  lcd.print("Humidity: ");
+  lcd.print(DHT11.humidity);
+  lcd.print("%");
+  delay(1000);
 }
