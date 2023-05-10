@@ -28,10 +28,11 @@ const int resetButton = 6;  //Reset button to set to idle
 int resetButtonState = 0;
 
 //Four LEDs variable declaration
-int YellowLED = 44;
-int RedLED = 42;
-int GreenLED = 46;
 int BlueLED = 40;
+int RedLED = 42;
+int YellowLED = 44;
+int GreenLED = 46;
+
 
 //Humidity and temperature monitor variable declaration
 #define DHT11PIN 7
@@ -59,6 +60,17 @@ volatile unsigned char *myUDR0   = (unsigned char *)0x00C6;
 volatile unsigned char* port_b = (unsigned char*) 0x25; 
 volatile unsigned char* ddr_b  = (unsigned char*) 0x24; 
 volatile unsigned char* pin_b  = (unsigned char*) 0x23; 
+
+
+volatile unsigned char *myTCCR1A = (unsigned char *) 0x80;
+volatile unsigned char *myTCCR1B = (unsigned char *) 0x81;
+volatile unsigned char *myTCCR1C = (unsigned char *) 0x82;
+volatile unsigned char *myTIMSK1 = (unsigned char *) 0x6F;
+volatile unsigned int  *myTCNT1  = (unsigned  int *) 0x84;
+volatile unsigned char *myTIFR1 =  (unsigned char *) 0x36;
+
+
+
 
 volatile unsigned char* my_ADMUX = (unsigned char*) 0x7C;
 volatile unsigned char* my_ADCSRB = (unsigned char*) 0x7B;
@@ -89,10 +101,10 @@ void setup() {
   pinMode(onOffButton, INPUT);
   pinMode(resetButton, INPUT);
   // Initialize LED pins as outputs
-  pinMode(YellowLED, OUTPUT);
-  pinMode(RedLED, OUTPUT);
-  pinMode(GreenLED, OUTPUT);
-  pinMode(BlueLED, OUTPUT);
+  DDRG = 0b00000010; //BLUE
+  DDRC = 0b00100000; //RED
+  DDRA = 0b00000001; //YELLOW
+  DDRL = 0b00001000; //GREEN
 
   // Set all the motor control pins to outputs
   pinMode(enMotor, OUTPUT);
@@ -146,7 +158,7 @@ void loop() {
     stateNum = 2;
     displayTime(stateNum);
     stateAction(stateNum);
-    delay(5000);
+    myDelay(50000);
   }
   // if on off button pressed, add to value variable
   if (onOffButtonState == HIGH){
@@ -169,7 +181,7 @@ if (onOffValue % 2 == 0){
       displayTime(stateNum);
                                             //Add code to move to idle if button pressed         
     } else {
-      if (temp > 0) {                      //Insert boolean expression for if tempature is GREATER than a certain number //placeholder number
+      if (temp > 40) {                      //Insert boolean expression for if tempature is GREATER than a certain number //placeholder number
         // System Running
         stateNum = 1;  
         displayTime(stateNum);
@@ -186,7 +198,7 @@ if (onOffValue % 2 == 0){
     displayTime(stateNum);
   }
   stateAction(stateNum);
-  delay(1000);
+  myDelay(1000);
 }
 
 // Function for deciding which state the cooler is in and doing the actions for that stage
@@ -196,10 +208,10 @@ void stateAction(int stateNum) {
     lcd.clear();
     lcd.setCursor (0, 0);
     // Turn on green LED
-    digitalWrite (YellowLED, LOW);
-    digitalWrite (RedLED, LOW);
-    digitalWrite (GreenLED, LOW);
-    digitalWrite (BlueLED, HIGH);
+  PORTG = 0b00000000; //BLUE
+  PORTC = 0b00000000; //RED
+  PORTA = 0b00000000; //YELLOW
+  PORTL = 0b00001000; //GREEN
     // Run Motor at fastest speed
     analogWrite (enMotor, 255);
     digitalWrite(in1Motor, LOW);
@@ -211,10 +223,10 @@ void stateAction(int stateNum) {
     lcd.clear();
     lcd.setCursor (0, 0);        
     // Turn on blue LED
-    digitalWrite (YellowLED, LOW);
-    digitalWrite (RedLED, LOW);
-    digitalWrite (GreenLED, HIGH);
-    digitalWrite (BlueLED, LOW);
+   PORTG = 0b00000000; //BLUE
+   PORTC = 0b00000000; //RED
+   PORTA = 0b00000000; //YELLOW
+   PORTL = 0b00001000; //GREEN
     // Turn off motor
     digitalWrite(in1Motor, LOW);
     digitalWrite(in2Motor,LOW);
@@ -227,10 +239,10 @@ void stateAction(int stateNum) {
     lcd.setCursor (0, 1);
     lcd.print ("too low");
     // Turn on red LED
-    digitalWrite (YellowLED, LOW);
-    digitalWrite (RedLED, HIGH);
-    digitalWrite (GreenLED, LOW);
-    digitalWrite (BlueLED, LOW);
+    PORTG = 0b00000000; //BLUE
+    PORTC = 0b00100000; //RED
+    PORTA = 0b00000000; //YELLOW
+    PORTL = 0b00000000; //GREEN
      // Turn off motor
     digitalWrite(in1Motor, LOW);
     digitalWrite(in2Motor,LOW); 
@@ -242,10 +254,10 @@ void stateAction(int stateNum) {
     lcd.setCursor (0, 0);
     lcd.print ("Disabled");
     // Turn on yellow LED
-    digitalWrite (YellowLED, HIGH);
-    digitalWrite (RedLED, LOW);
-    digitalWrite (GreenLED, LOW);
-    digitalWrite (BlueLED, LOW);
+   PORTG = 0b00000000; //BLUE
+   PORTC = 0b00000000; //RED
+   PORTA = 0b00000001; //YELLOW
+   PORTL = 0b00000000; //GREEN
     // Turn off motor
     digitalWrite(in1Motor, LOW);
     digitalWrite(in2Motor,LOW);
@@ -395,7 +407,7 @@ void displayTime(int mode){
   Serial.print(':');
   Serial.println(rtc.second());
   
-  delay(1000);
+  myDelay(1000);
 }
 void displayTemp()
 {
@@ -409,5 +421,20 @@ void displayTemp()
   lcd.print("Humidity: ");
   lcd.print(DHT11.humidity);
   lcd.print("%");
-  delay(1000);
+  myDelay(1000);
+}
+void myDelay(unsigned int freq) {
+  double period = 1.0/double(freq);
+  double half_period = period/ 2.0f;
+  double clk_period = 0.0000000625;
+  unsigned int ticks = half_period / clk_period;
+
+  *myTCCR1B &= 0xF8;
+  *myTCNT1 = (unsigned int) (65536 - ticks);
+  * myTCCR1B |= 0b00000001;
+
+  while((*myTIFR1 & 0x01)==0); // 0b 0000 0000
+
+  *myTCCR1B &= 0xF8;   // 0b 0000 0000
+  *myTIFR1 |= 0x01;
 }
